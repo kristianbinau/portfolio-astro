@@ -1,21 +1,26 @@
 ---
 interface Props {
 	title: string;
-	body: string;
-	href: string;
+	additionalClasses?: string;
 }
 
-const { href, title, body } = Astro.props;
+const { title, additionalClasses } = Astro.props;
+
+const classes =
+	'shadow-solid rounded-xl border-4 border-black' +
+	(additionalClasses ? ' ' + additionalClasses : '');
 ---
 
-<li class="link-card">
-	<a href={href}>
-		<h2>
-			{title}
-			<span>&rarr;</span>
-		</h2>
-		<p>
-			{body}
-		</p>
-	</a>
-</li>
+<div class={classes}>
+	<div class="flex items-center gap-2 border-b-2 border-black p-2">
+		<div class="h-5 w-5 rounded-xl border-2 border-black bg-white"></div>
+		<div class="grow text-center font-bold">{title}</div>
+	</div>
+	<div class="p-2">
+		<div class="no-scrollbar h-40 overflow-y-auto font-bold">
+			<slot>
+				<p></p>
+			</slot>
+		</div>
+	</div>
+</div>

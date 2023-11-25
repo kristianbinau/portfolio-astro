@@ -1,0 +1,18 @@
+---
+interface Props {
+	link: string;
+	additionalClasses?: string;
+}
+
+const { link, additionalClasses } = Astro.props;
+
+const classes =
+	'shadow-solid flex h-12 w-12 items-center justify-center rounded-xl border-4 border-black duration-100 hover:translate-x-[5px] hover:translate-y-[5px] hover:shadow-none' +
+	(additionalClasses ? ' ' + additionalClasses : '');
+---
+
+<a class={classes} href={link} target="_blank">
+	<slot>
+		<svg></svg>
+	</slot>
+</a>
