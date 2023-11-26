@@ -1,11 +1,12 @@
 ---
 import Button from '../components/Button.astro';
 import Card from '../components/Card.astro';
+import Terminal from '../components/Terminal.vue';
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Kristian Binau">
-	<div id="app" data-v-app="">
+	<div id="app">
 		<main class="relative mx-auto max-w-screen-md p-5 sm:pt-20">
 			<div class="shadow-solid mb-3 rounded-xl border-4 border-black bg-neu-pink">
 				<div class="flex items-center gap-2 border-b-2 border-black p-2">
@@ -44,13 +45,7 @@ import Layout from '../layouts/Layout.astro';
 					 - <a class="underline" href="https://careers.ordbogen.com/">Ordbogen</a> 2019-07 - Now
 				</Card>
 				<Card title="career.md" additionalClasses="bg-neu-cyan sm:w-0 sm:basis-2/3">
-					<div class="font-mono">
-						<div class="flex items-center text-sm">get started with typing "help"</div>
-						<div class="flex items-center text-sm">
-							<div id="prompt">[you@binau.me ~]$&nbsp;</div>
-							<input class="w-full bg-transparent outline-none" type="text" />
-						</div>
-					</div>
+					<Terminal client:load></Terminal>
 				</Card>
 			</div>
 			<div class="flex items-center justify-between gap-3 max-sm:flex-col">
