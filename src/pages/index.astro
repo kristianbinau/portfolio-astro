@@ -3,6 +3,9 @@ import Button from '../components/Button.astro';
 import Card from '../components/Card.astro';
 import Terminal from '../components/Terminal.vue';
 import Layout from '../layouts/Layout.astro';
+import { getAge } from '@utils/me';
+
+const age = getAge();
 ---
 
 <Layout title="Kristian Binau">
@@ -22,7 +25,7 @@ import Layout from '../layouts/Layout.astro';
 					<div class="mb-2 content-center text-5xl font-black">
 						it's <span class="bg-neu-yellow">Kristian!</span>
 					</div><div class="mb-2 text-lg font-bold">
-						Kristian Binau, 22 years-old, recently graduated. Full-Stack Developer, passionate about
+						Kristian Binau, {age} years-old, recently graduated. Full-Stack Developer, passionate about
 						security, programming, privacy.
 					</div>
 				</div>

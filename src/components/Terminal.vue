@@ -16,6 +16,7 @@
 
 <script lang="ts" setup>
 import { ref, nextTick, computed } from 'vue';
+import { getAge } from '@utils/me';
 
 /**
  * Consts
@@ -75,8 +76,6 @@ async function onEnter() {
 const commands: Command[] = [];
 
 const executeCommand = async (command: string, args: string[]) => {
-	console.log(command, args);
-
 	const commandObject = commands.find((c) => c.name === command);
 
 	if (commandObject === undefined) {
@@ -115,11 +114,12 @@ commands.push(
 			return ['about: invalid number of arguments, expected 0'];
 		}
 
-		const age = Math.floor((Date.now() - new Date('2001-06-28').getTime()) / 31557600000);
+		const age = getAge();
 
 		return [
 			`Hi, I am Kristian Binau, a ${age} year old developer from Denmark.`,
-			'I am currently working on at Ordbogen A/S as a fullstack developer.',
+			'I am currently working at Ordbogen A/S as a fullstack developer.',
+			'At Ordbogen I work on <a class="underline" href="https://www.grammatip.com">grammatip.com</a>, a website that helps danish students learn grammar.',
 			'You can find more information about me on&nbsp;<a class="underline" href="https://www.linkedin.com/in/kristian-binau-2a92a8171/">linkedin</a>.',
 		];
 	}),
@@ -169,7 +169,6 @@ commands.push(
 		}
 
 		if (!newPath.startsWith('/')) {
-			console.log('path does not start with /');
 			newPath = `${currentPath.value === '/' ? '' : currentPath.value}/${newPath}`;
 		}
 
@@ -182,6 +181,31 @@ commands.push(
 		currentPath.value = directory.path;
 
 		return [];
+	}),
+);
+commands.push(
+	new Command('cat', 'Print file contents', (args) => {
+		if (args.length !== 1) {
+			return ['cat: invalid number of arguments, expected 1'];
+		}
+
+		let path = args[0];
+
+		if (path === undefined) {
+			return ['cat: error'];
+		}
+
+		if (!path.startsWith('/')) {
+			path = `${currentPath.value === '/' ? '' : currentPath.value}/${path}`;
+		}
+
+		const file = getFileByPath(path);
+
+		if (file === undefined) {
+			return ['cat: no such file'];
+		}
+
+		return file.contents;
 	}),
 );
 
@@ -204,10 +228,16 @@ const filesystem: Directory = {
 						{
 							name: 'passwords.txt',
 							path: '/home/you/passwords.txt',
+							contents: ['root: 4h6sgb732x'],
 						},
 					],
 				},
 			],
+		},
+		{
+			name: 'var',
+			path: '/var',
+			contents: ['This is a file'],
 		},
 	],
 };
@@ -273,6 +303,32 @@ const getDirectoryByPath = (path: string): Directory | undefined => {
 	return selectedDirectory;
 };
 
+const getFileByPath = (path: string): File | undefined => {
+	const directoryPath = path.split('/').slice(0, -1).join('/');
+	const fileName = path.split('/').slice(-1)[0];
+
+	let directory: Directory | undefined = filesystem;
+	if (directoryPath !== '') {
+		directory = getDirectoryByPath(directoryPath);
+	}
+
+	if (directory === undefined) {
+		return undefined;
+	}
+
+	const file = directory.items.find((item) => item.name === fileName);
+
+	if (file === undefined) {
+		return undefined;
+	}
+
+	if (isDirectory(file)) {
+		return undefined;
+	}
+
+	return file;
+};
+
 /**
  * Utils
  *
@@ -333,6 +389,7 @@ class Command {
 type File = {
 	name: string;
 	path: string;
+	contents: string[];
 };
 
 type Directory = {
@@ -342,6 +399,10 @@ type Directory = {
 };
 
 function isFile(item: File | Directory): item is File {
-	return 'items' in item === false;
+	return (item as File).contents !== undefined;
+}
+
+function isDirectory(item: File | Directory): item is Directory {
+	return (item as Directory).items !== undefined;
 }
 </script>

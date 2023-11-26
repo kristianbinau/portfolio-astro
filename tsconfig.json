@@ -1,6 +1,19 @@
 {
-  "extends": "astro/tsconfigs/strictest",
-  "compilerOptions": {
-    "jsx": "preserve"
-  }
+	"extends": "astro/tsconfigs/strictest",
+	"compilerOptions": {
+		"jsx": "preserve",
+		"plugins": [
+			{
+				"name": "@astrojs/ts-plugin"
+			}
+		],
+		"baseUrl": ".",
+		"paths": {
+			"@components/*": ["./src/components/*"],
+			"@layouts/*": ["./src/layouts/*"],
+			"@utils/*": ["./src/utils/*"]
+		},
+		"strictNullChecks": true,
+		"verbatimModuleSyntax": true
+	}
 }
