@@ -2,7 +2,7 @@
 	<div class="h-full font-mono" @click="focusInput">
 		<div ref="linesRef" v-for="line of lines" class="flex items-center text-sm" v-html="line"></div>
 		<div class="flex items-center text-sm">
-			<div v-if="!commandExecuting" id="prompt" v-html="home"></div>
+			<div v-if="!commandExecuting" id="prompt" v-html="prompt"></div>
 			<input
 				ref="inputRef"
 				v-model="input"
@@ -15,7 +15,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, computed } from 'vue';
+
+/**
+ * Consts
+ */
+const HOME_PATH = '/home/you';
 
 /**
  * Refs
@@ -34,10 +39,10 @@ const lines = ref<string[]>(['get started with typing "help"']);
 const input = ref<string>('');
 const commandExecuting = ref<boolean>(false);
 
-/**
- * Defaults
- */
-const home = ref<string>('[you@binau.me ~]$&nbsp;');
+const prompt = computed(() => {
+	const path = currentPath.value === '/home/you' ? '~' : currentPath.value;
+	return `<span class="text-gray-400">[</span><span class="text-fuchsia-500">you@binau.me</span>&nbsp;<span class="text-violet-900">${path}</span><span class="text-gray-400">]</span>$&nbsp;`;
+});
 
 /**
  * Lifecycle
@@ -45,13 +50,17 @@ const home = ref<string>('[you@binau.me ~]$&nbsp;');
 async function onEnter() {
 	commandExecuting.value = true;
 
-	const command = input.value.trim();
+	const inputValue = input.value.trim();
+
+	const command = inputValue.split(' ')[0] ?? inputValue;
+
+	const args = inputValue.split(' ').slice(1);
 
 	input.value = '';
 
-	printLine(`${home.value}${command}`, false);
+	printLine(`${prompt.value}${inputValue}`, false);
 
-	await executeCommand(command);
+	await executeCommand(command, args);
 
 	nextTick().then(() => {
 		scrollToInput();
@@ -65,7 +74,9 @@ async function onEnter() {
  */
 const commands: Command[] = [];
 
-const executeCommand = async (command: string) => {
+const executeCommand = async (command: string, args: string[]) => {
+	console.log(command, args);
+
 	const commandObject = commands.find((c) => c.name === command);
 
 	if (commandObject === undefined) {
@@ -74,13 +85,17 @@ const executeCommand = async (command: string) => {
 		return;
 	}
 
-	for (const line of commandObject.execute()) {
+	for (const line of commandObject.execute(args)) {
 		await printLine(line);
 	}
 };
 
 commands.push(
-	new Command('help', 'Show this help', () => {
+	new Command('help', 'Show this help', (args) => {
+		if (args.length !== 0) {
+			return ['help: invalid number of arguments, expected 0'];
+		}
+
 		if (commands.length === 0) {
 			return ['No commands avaliable'];
 		}
@@ -95,7 +110,11 @@ commands.push(
 	}),
 );
 commands.push(
-	new Command('about', 'Show information about me', () => {
+	new Command('about', 'Show information about me', (args) => {
+		if (args.length !== 0) {
+			return ['about: invalid number of arguments, expected 0'];
+		}
+
 		const age = Math.floor((Date.now() - new Date('2001-06-28').getTime()) / 31557600000);
 
 		return [
@@ -106,11 +125,153 @@ commands.push(
 	}),
 );
 commands.push(
-	new Command('clear', 'Clear the terminal', () => {
+	new Command('clear', 'Clear the terminal', (args) => {
+		if (args.length !== 0) {
+			return ['clear: invalid number of arguments, expected 0'];
+		}
+
 		lines.value = [];
 		return [];
 	}),
 );
+commands.push(
+	new Command('ls', 'List files and directories', (args) => {
+		if (args.length !== 0) {
+			return ['ls: invalid number of arguments, expected 0'];
+		}
+
+		const directory = currentDirectory.value;
+
+		if (directory.items.length === 0) {
+			return ['No files or directories in this directory'];
+		}
+
+		const items = directory.items.map((item) => item.name).join('&nbsp;&nbsp;');
+
+		return [items];
+	}),
+);
+commands.push(
+	new Command('cd', 'Change directory', (args) => {
+		if (args.length > 1) {
+			return ['cd: invalid number of arguments, expected 0..1'];
+		}
+
+		if (args.length === 0) {
+			currentPath.value = HOME_PATH;
+			return [];
+		}
+
+		let newPath = args[0];
+
+		if (newPath === undefined) {
+			return ['cd: error'];
+		}
+
+		if (!newPath.startsWith('/')) {
+			console.log('path does not start with /');
+			newPath = `${currentPath.value === '/' ? '' : currentPath.value}/${newPath}`;
+		}
+
+		const directory = getDirectoryByPath(newPath);
+
+		if (directory === undefined) {
+			return ['cd: no such file or directory'];
+		}
+
+		currentPath.value = directory.path;
+
+		return [];
+	}),
+);
+
+/**
+ * Filesystem
+ */
+const currentPath = ref<string>('/home/you');
+const filesystem: Directory = {
+	name: '/',
+	path: '/',
+	items: [
+		{
+			name: 'home',
+			path: '/home',
+			items: [
+				{
+					name: 'you',
+					path: '/home/you',
+					items: [
+						{
+							name: 'passwords.txt',
+							path: '/home/you/passwords.txt',
+						},
+					],
+				},
+			],
+		},
+	],
+};
+
+const currentDirectory = computed(() => {
+	const directory = getDirectoryByPath(currentPath.value);
+
+	if (directory === undefined) {
+		throw new Error('Inside invalid directory??');
+	}
+
+	return directory;
+});
+
+const getDirectoryByPath = (path: string): Directory | undefined => {
+	if (path === '/') {
+		return filesystem;
+	}
+
+	if (!path.startsWith('/')) {
+		throw new Error('Path does not start with /');
+	}
+
+	const pathParts = path.split('/').splice(1);
+	let selectedDirectory = filesystem;
+
+	// Now we can move through the filesystem
+	for (const pathPart of pathParts) {
+		if (pathPart === '..') {
+			if (selectedDirectory.name === '/') {
+				return undefined;
+			}
+
+			const parentDirectoryPath = selectedDirectory.path.split('/').slice(0, -1).join('/');
+
+			if (parentDirectoryPath === '') {
+				return filesystem;
+			}
+
+			const parentDirectory = getDirectoryByPath(parentDirectoryPath);
+
+			if (parentDirectory === undefined) {
+				return undefined;
+			}
+
+			selectedDirectory = parentDirectory;
+			continue;
+		}
+
+		const item = selectedDirectory.items.find((item) => item.name === pathPart);
+
+		if (item === undefined) {
+			return undefined;
+		}
+
+		if (isFile(item)) {
+			return undefined;
+		}
+
+		selectedDirectory = item;
+	}
+
+	return selectedDirectory;
+};
 
 /**
  * Utils
@@ -160,12 +321,27 @@ const printLine = async (line: string, delay: boolean = true) => {
 class Command {
 	name: string;
 	description: string;
-	execute: () => string[];
+	execute: (args: string[]) => string[];
 
-	constructor(name: string, description: string, execute: () => string[]) {
+	constructor(name: string, description: string, execute: (args: string[]) => string[]) {
 		this.name = name;
 		this.description = description;
 		this.execute = execute;
 	}
+}
+
+type File = {
+	name: string;
+	path: string;
+};
+
+type Directory = {
+	name: string;
+	path: string;
+	items: (File | Directory)[];
+};
+
+function isFile(item: File | Directory): item is File {
+	return 'items' in item === false;
 }
 </script>
