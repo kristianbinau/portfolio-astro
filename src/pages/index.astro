@@ -3,9 +3,7 @@ import Button from '../components/Button.astro';
 import Card from '../components/Card.astro';
 import Terminal from '../components/Terminal.vue';
 import Layout from '../layouts/Layout.astro';
-import { getAge } from '@utils/me';
-
-const age = getAge();
+import { getShortName, getFullName, getShortDescription } from '@utils/me';
 ---
 
 <Layout title="Kristian Binau">
@@ -23,10 +21,9 @@ const age = getAge();
 					</div>
 				</div><div class="p-2">
 					<div class="mb-2 content-center text-5xl font-black">
-						it's <span class="bg-neu-yellow">Kristian!</span>
+						it's <span class="bg-neu-yellow">{getShortName()}!</span>
 					</div><div class="mb-2 text-lg font-bold">
-						Kristian Binau, {age} years-old, recently graduated. Full-Stack Developer, passionate about
-						security, programming, privacy.
+						{getFullName()}, {getShortDescription()}
 					</div>
 				</div>
 			</div>

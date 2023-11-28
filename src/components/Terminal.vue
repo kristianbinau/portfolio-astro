@@ -8,7 +8,8 @@
 				v-model="input"
 				class="bg-transparent outline-none"
 				type="text"
-				@keyup.enter="onEnter"
+				@keydown.enter.prevent="onEnter"
+				@keydown.tab.prevent="onTab"
 			/>
 		</div>
 	</div>
@@ -39,6 +40,8 @@ const lines = ref<string[]>(['get started with typing "help"']);
  */
 const input = ref<string>('');
 const commandExecuting = ref<boolean>(false);
+const previousTabValue = ref<string>('');
+const previousTabSuggestions = ref<string[]>([]);
 
 const prompt = computed(() => {
 	const path = currentPath.value === '/home/you' ? '~' : currentPath.value;
@@ -48,6 +51,7 @@ const prompt = computed(() => {
 /**
  * Lifecycle
  */
+// Execute command
 async function onEnter() {
 	commandExecuting.value = true;
 
@@ -69,6 +73,143 @@ async function onEnter() {
 
 	commandExecuting.value = false;
 }
+
+// Suggest & autocomplete command
+async function onTab() {
+	const inputValue = input.value;
+
+	await handleSuggestions(inputValue);
+
+	if (!inputValue.includes(' ')) {
+		suggestCommands(inputValue);
+	} else {
+		suggestItems(inputValue);
+	}
+}
+
+/**
+ * Suggestions
+ */
+const handleSuggestions = async (inputValue: string) => {
+	// If the user has pressed tab twice we show the suggestions
+	if (previousTabValue.value === inputValue) {
+		if (previousTabSuggestions.value.length === 0) {
+			return;
+		}
+
+		const suggestions = previousTabSuggestions.value.join('&nbsp;&nbsp;');
+
+		printLine(`${prompt.value}${inputValue}`, false);
+		await printLine(suggestions);
+
+		nextTick().then(() => {
+			scrollToInput();
+		});
+
+		return;
+	} else {
+		previousTabValue.value = inputValue;
+		previousTabSuggestions.value = [];
+	}
+};
+
+const suggestCommands = (inputValue: string) => {
+	const matchingCommands = commands.filter((command) => command.name.startsWith(inputValue));
+
+	if (matchingCommands.length === 0) {
+		return;
+	}
+
+	if (matchingCommands.length === 1) {
+		const matchingCommand = matchingCommands[0];
+
+		if (matchingCommand === undefined) {
+			return;
+		}
+
+		input.value = matchingCommand.name;
+		return;
+	}
+
+	previousTabSuggestions.value = matchingCommands.map((command) => command.name);
+};
+
+const suggestItems = (inputValue: string) => {
+	// Get the current string that we are trying to autocomplete
+	let currentSuggestableString = inputValue.split(' ').slice(-1)[0];
+
+	if (currentSuggestableString === undefined) {
+		return;
+	}
+
+	// Get the current directory that we are trying to autocomplete in
+	const currentSuggestableStringDirectory = currentSuggestableString
+		.split('/')
+		.slice(0, -1)
+		.join('/');
+
+	// If the currentSuggestableStringDirectory is empty we are trying to autocomplete in the current directory
+	let directory: Directory | undefined = currentDirectory.value;
+	if (currentSuggestableStringDirectory !== '') {
+		// We need to figure out if it's an absolute or relative path
+		if (currentSuggestableString.startsWith('/')) {
+			directory = getDirectoryByPath(currentSuggestableStringDirectory);
+		} else {
+			const directoryPath = currentPath.value === '/' ? '' : currentPath.value;
+			directory = getDirectoryByPath(`${directoryPath}/${currentSuggestableStringDirectory}`);
+		}
+	}
+
+	if (directory === undefined) {
+		return;
+	}
+
+	// If currentSuggestableString contains a / we need to search only for what comes after the last /
+	if (currentSuggestableString.includes('/')) {
+		const currentSuggestableStringParts = currentSuggestableString.split('/');
+
+		if (currentSuggestableStringParts.length === 0) {
+			return;
+		}
+
+		const currentSuggestableStringLastParts = currentSuggestableStringParts.slice(-1)[0];
+
+		if (currentSuggestableStringLastParts === undefined) {
+			return;
+		}
+
+		currentSuggestableString = currentSuggestableStringLastParts;
+	}
+
+	const matchingItems = directory.items.filter((item) => {
+		if (currentSuggestableString === undefined) {
+			return false;
+		}
+
+		return item.name.startsWith(currentSuggestableString);
+	});
+
+	if (matchingItems.length === 0) {
+		return;
+	}
+
+	if (matchingItems.length === 1) {
+		const matchingItem = matchingItems[0];
+
+		if (matchingItem === undefined) {
+			return;
+		}
+
+		if (currentSuggestableString === '') {
+			input.value = inputValue + matchingItem.name;
+		} else {
+			input.value = inputValue.replace(currentSuggestableString, matchingItem.name);
+		}
+		return;
+	}
+
+	previousTabSuggestions.value = matchingItems.map((item) => item.name);
+};
 
 /**
  * Commands
@@ -119,7 +260,8 @@ commands.push(
 		return [
 			`Hi, I am Kristian Binau, a ${age} year old developer from Denmark.`,
 			'I am currently working at Ordbogen A/S as a fullstack developer.',
-			'At Ordbogen I work on <a class="underline" href="https://www.grammatip.com">grammatip.com</a>, a website that helps danish students learn grammar.',
+			'At Ordbogen I work on&nbsp;<a class="underline" href="https://www.grammatip.com">grammatip.com</a>,',
+			'a website that helps danish students learn grammar.',
 			'You can find more information about me on&nbsp;<a class="underline" href="https://www.linkedin.com/in/kristian-binau-2a92a8171/">linkedin</a>.',
 		];
 	}),
@@ -259,6 +401,11 @@ const getDirectoryByPath = (path: string): Directory | undefined => {
 
 	if (!path.startsWith('/')) {
 		throw new Error('Path does not start with /');
+	}
+
+	// Remove the last / if it exists
+	if (path.endsWith('/')) {
+		path = path.slice(0, -1);
 	}
 
 	const pathParts = path.split('/').splice(1);
