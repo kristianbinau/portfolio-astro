@@ -260,9 +260,9 @@ commands.push(
 		return [
 			`Hi, I am Kristian Binau, a ${age} year old developer from Denmark.`,
 			'I am currently working at Ordbogen A/S as a fullstack developer.',
-			'At Ordbogen I work on&nbsp;<a class="underline" href="https://www.grammatip.com">grammatip.com</a>,',
+			'At Ordbogen I work on&nbsp;<a class="underline" href="https://www.grammatip.com" target="_blank">grammatip.com</a>,',
 			'a website that helps danish students learn grammar.',
-			'You can find more information about me on&nbsp;<a class="underline" href="https://www.linkedin.com/in/kristian-binau-2a92a8171/">linkedin</a>.',
+			'You can find more information about me on&nbsp;<a class="underline" href="https://www.linkedin.com/in/kristian-binau-2a92a8171/" target="_blank">linkedin</a>.',
 		];
 	}),
 );
@@ -368,9 +368,68 @@ const filesystem: Directory = {
 					path: '/home/you',
 					items: [
 						{
+							name: 'made-with.txt',
+							path: '/home/you/made-with.txt',
+							contents: [
+								'Made with:',
+								'&nbsp;&nbsp;<a class="underline" target="_blank" href="https://astro.build">Astro</a>',
+								'&nbsp;&nbsp;<a class="underline" target="_blank" href="https://v3.vuejs.org">Vue</a>',
+								'&nbsp;&nbsp;<a class="underline" target="_blank" href="https://tailwindcss.com">Tailwind</a>',
+								'&nbsp;&nbsp;<a class="underline" target="_blank" href="https://www.typescriptlang.org">TypeScript</a>',
+							],
+						},
+						{
+							name: 'deployed-on.txt',
+							path: '/home/you/deployed-on.txt',
+							contents: [
+								'Deployed on:',
+								'&nbsp;&nbsp;<a class="underline" target="_blank" href="https://vercel.com">Vercel</a>',
+							],
+						},
+						{
 							name: 'passwords.txt',
 							path: '/home/you/passwords.txt',
 							contents: ['root: 4h6sgb732x'],
+						},
+						{
+							name: 'projects',
+							path: '/home/you/projects',
+							items: [
+								{
+									name: 'binau.me',
+									path: '/home/you/projects/binau.me',
+									items: [],
+								},
+								{
+									name: 'SimpleHistory',
+									path: '/home/you/projects/simplehistory',
+
+									items: [
+										{
+											name: 'src',
+											path: '/home/you/projects/simplehistory/src',
+											items: [
+												{
+													name: 'mod.ts',
+													path: '/home/you/projects/simplehistory/src/mod.ts',
+													// Link to https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod.ts
+													contents: [
+														'<a class="underline" target="_blank" href="https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod.ts">mod.ts</a>',
+													],
+												},
+												{
+													name: 'mod_test.ts',
+													path: '/home/you/projects/simplehistory/src/mod_test.ts',
+													// Link to https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod_test.ts
+													contents: [
+														'<a class="underline" target="_blank" href="https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod_test.ts">mod_test.ts</a>',
+													],
+												},
+											],
+										},
+									],
+								},
+							],
 						},
 					],
 				},
