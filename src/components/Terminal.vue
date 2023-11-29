@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, nextTick, computed } from 'vue';
+import { ref, nextTick, computed, watch } from 'vue';
 import { getAge } from '@utils/me';
 
 /**
@@ -40,6 +40,7 @@ const lines = ref<string[]>(['get started with typing "help"']);
  */
 const input = ref<string>('');
 const commandExecuting = ref<boolean>(false);
+const hasFetchedGitHub = ref<boolean>(false);
 const previousTabValue = ref<string>('');
 const previousTabSuggestions = ref<string[]>([]);
 
@@ -86,6 +87,11 @@ async function onTab() {
 		suggestItems(inputValue);
 	}
 }
+
+// Watch input and scroll to input
+watch(input, () => {
+	scrollToInput();
+});
 
 /**
  * Suggestions
@@ -347,6 +353,10 @@ commands.push(
 			return ['cat: no such file'];
 		}
 
+		if (isGitHubFile(file)) {
+			printGitHubFile(file);
+		}
+
 		return file.contents;
 	}),
 );
@@ -394,42 +404,7 @@ const filesystem: Directory = {
 						{
 							name: 'projects',
 							path: '/home/you/projects',
-							items: [
-								{
-									name: 'binau.me',
-									path: '/home/you/projects/binau.me',
-									items: [],
-								},
-								{
-									name: 'SimpleHistory',
-									path: '/home/you/projects/simplehistory',
-
-									items: [
-										{
-											name: 'src',
-											path: '/home/you/projects/simplehistory/src',
-											items: [
-												{
-													name: 'mod.ts',
-													path: '/home/you/projects/simplehistory/src/mod.ts',
-													// Link to https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod.ts
-													contents: [
-														'<a class="underline" target="_blank" href="https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod.ts">mod.ts</a>',
-													],
-												},
-												{
-													name: 'mod_test.ts',
-													path: '/home/you/projects/simplehistory/src/mod_test.ts',
-													// Link to https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod_test.ts
-													contents: [
-														'<a class="underline" target="_blank" href="https://github.com/kristianbinau/SimpleHistory/blob/main/src/mod_test.ts">mod_test.ts</a>',
-													],
-												},
-											],
-										},
-									],
-								},
-							],
+							items: [],
 						},
 					],
 				},
@@ -536,6 +511,146 @@ const getFileByPath = (path: string): File | undefined => {
 };
 
 /**
+ * GitHub
+ */
+const projectsDirectory = (() => {
+	const home = filesystem.items.find((item) => item.name === 'home');
+
+	if (home === undefined || !isDirectory(home)) {
+		throw new Error('Home directory not found');
+	}
+
+	const you = home.items.find((item) => item.name === 'you');
+
+	if (you === undefined || !isDirectory(you)) {
+		throw new Error('You directory not found');
+	}
+
+	const projects = you.items.find((item) => item.name === 'projects');
+
+	if (projects === undefined || !isDirectory(projects)) {
+		throw new Error('Projects directory not found');
+	}
+
+	return projects;
+})();
+
+const gitHubRepos: GitHubRepo[] = [
+	{
+		name: 'portfolio-astro',
+		url: 'https://api.github.com/repos/kristianbinau/portfolio-astro',
+		insertInto: projectsDirectory,
+	},
+];
+
+const fetchGitHubRepos = () => {
+	return Promise.all(gitHubRepos.map((repo) => fetchGitHubRepo(repo)));
+};
+
+const fetchGitHubRepo = async (githubRepo: GitHubRepo) => {
+	// Check if we have already fetched the repo
+	const localStorageRepo = localStorage.getItem(`github-repo-${githubRepo.name}`);
+
+	if (localStorageRepo !== null) {
+		const repoDirectory = JSON.parse(localStorageRepo) as GitHubDirectory;
+
+		githubRepo.insertInto.items.push(repoDirectory);
+		return;
+	}
+
+	const response = await fetch(githubRepo.url);
+
+	if (!response.ok) {
+		return;
+	}
+
+	const repo = (await response.json()) as { name: string; contents_url: string };
+
+	const repoDirectory = {
+		name: repo.name,
+		path: `${githubRepo.insertInto.path}/${repo.name}`,
+		url: repo.contents_url.replace('{+path}', ''),
+		items: [],
+	};
+
+	githubRepo.insertInto.items.push(repoDirectory);
+
+	await fetchGitHubRepoContents(repoDirectory);
+
+	// Save the repo directory to localStorage
+	localStorage.setItem(`github-repo-${githubRepo.name}`, JSON.stringify(repoDirectory));
+};
+
+const fetchGitHubRepoContents = async (repoDirectory: GitHubDirectory) => {
+	const response = await fetch(`${repoDirectory.url}`);
+
+	if (!response.ok) {
+		return;
+	}
+
+	const contents = (await response.json()) as ((GitHubFile | GitHubDirectory) & {
+		type: 'dir' | 'file';
+		content: string;
+	})[];
+
+	for (const content of contents) {
+		if (content.type === 'dir') {
+			const directory = {
+				name: content.name,
+				path: `${repoDirectory.path}/${content.name}`,
+				url: content.url.split('?')[0] as string,
+				items: [],
+			};
+
+			repoDirectory.items.push(directory);
+
+			await fetchGitHubRepoContents(directory);
+		} else {
+			const file = {
+				name: content.name,
+				path: `${repoDirectory.path}/${content.name}`,
+				url: content.url,
+				contents: [],
+			};
+
+			repoDirectory.items.push(file);
+		}
+	}
+};
+
+const fetchGitHubFileContents = async (file: GitHubFile) => {
+	// First we check if we have already fetched the file and saved it to contents
+	if (file.contents.length !== 0) {
+		return;
+	}
+
+	// Then we check if we have already fetched the file and saved it to localStorage
+	const localStorageFile = localStorage.getItem(`github-file-${file.path}`);
+	if (localStorageFile !== null) {
+		const fileContents = JSON.parse(localStorageFile) as GitHubFile;
+
+		file.contents = fileContents.contents;
+
+		return;
+	}
+
+	// If we haven't fetched the file before we fetch it from GitHub
+	const response = await fetch(file.url);
+
+	if (!response.ok) {
+		return;
+	}
+
+	const fileContents = (await response.json()) as { content: string };
+
+	// Save to contents
+	file.contents = atob(fileContents.content).split('\n');
+
+	// Save to localStorage
+	localStorage.setItem(`github-file-${file.path}`, JSON.stringify(file));
+};
+
+/**
  * Utils
  *
  * These functions are used to manipulate the terminal
@@ -563,6 +678,12 @@ const scrollToInput = () => {
  */
 const focusInput = () => {
 	inputRef.value?.focus();
+
+	if (!hasFetchedGitHub.value) {
+		hasFetchedGitHub.value = true;
+
+		fetchGitHubRepos();
+	}
 };
 
 /**
@@ -576,6 +697,20 @@ const printLine = async (line: string, delay: boolean = true) => {
 		await nextTick();
 		await new Promise((r) => setTimeout(r, Math.random() * 150));
 	}
+};
+
+const printGitHubFile = async (file: GitHubFile) => {
+	if (file.contents.length === 0) {
+		await fetchGitHubFileContents(file);
+	}
+
+	for (const line of file.contents) {
+		printLine(line);
+	}
+
+	nextTick().then(() => {
+		scrollToInput();
+	});
 };
 </script>
 
@@ -604,11 +739,29 @@ type Directory = {
 	items: (File | Directory)[];
 };
 
+type GitHubFile = {
+	url: string;
+} & File;
+
+type GitHubDirectory = {
+	url: string;
+} & Directory;
+
+type GitHubRepo = {
+	name: string;
+	url: string;
+	insertInto: Directory;
+};
+
 function isFile(item: File | Directory): item is File {
 	return (item as File).contents !== undefined;
 }
 
 function isDirectory(item: File | Directory): item is Directory {
 	return (item as Directory).items !== undefined;
+}
+
+function isGitHubFile(item: File): item is GitHubFile {
+	return (item as GitHubFile).url !== undefined;
 }
 </script>
