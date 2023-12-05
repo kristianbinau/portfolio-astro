@@ -2,7 +2,7 @@
 // Extracted from `webdev-configs` (https://github.com/JulianCataldo/web-garden/tree/develop/configs)
 
 module.exports = {
-	printWidth: 100,
+	printWidth: 120,
 	semi: true,
 	singleQuote: true,
 	tabWidth: 2,

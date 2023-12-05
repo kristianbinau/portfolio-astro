@@ -1,6 +1,6 @@
 ---
 import Button from '../components/Button.astro';
-import Card from '../components/Card.astro';
+import Card from '../components/Card.vue';
 import Terminal from '../components/Terminal.vue';
 import Layout from '../layouts/Layout.astro';
 import { getShortName, getFullName, getShortDescription } from '@utils/me';
@@ -11,41 +11,42 @@ import { getShortName, getFullName, getShortDescription } from '@utils/me';
 		<main class="relative mx-auto max-w-screen-md p-5 sm:pt-20">
 			<div class="shadow-solid mb-3 rounded-xl border-4 border-black bg-neu-pink">
 				<div class="flex items-center gap-2 border-b-2 border-black p-2">
-					<div class="h-5 w-5 rounded-xl border-2 border-black bg-white"></div><div
-						class="h-5 w-5 rounded-xl border-2 border-black bg-white"
-					>
-					</div><div class="h-5 w-5 rounded-xl border-2 border-black bg-white"></div><div
-						class="grow text-center font-bold"
-					>
-						about_me.md
-					</div>
-				</div><div class="p-2">
+					<div class="h-5 w-5 rounded-xl border-2 border-black bg-white"></div>
+					<div class="h-5 w-5 rounded-xl border-2 border-black bg-white"></div>
+					<div class="h-5 w-5 rounded-xl border-2 border-black bg-white"></div>
+					<div class="grow text-center font-bold">about_me.md</div>
+				</div>
+				<div class="p-2">
 					<div class="mb-2 content-center text-5xl font-black">
 						it's <span class="bg-neu-yellow">{getShortName()}!</span>
-					</div><div class="mb-2 text-lg font-bold">
+					</div>
+					<div class="mb-2 text-lg font-bold">
 						{getFullName()}, {getShortDescription()}
 					</div>
 				</div>
 			</div>
 			<div class="mb-3 flex gap-3 max-sm:flex-col">
-				<Card title="career.md" additionalClasses="bg-neu-red sm:basis-1/3">
+				<Card title="career.md" classes="bg-neu-red sm:basis-1/3" controls={true} client:load>
 					<div>
 						<i>School</i>
 					</div>
 					<div>
 						- <a
 							class="underline"
+							target="_blank"
 							href="https://www.sde.dk/uddannelser/it-netvark-og-design/datatekniker/">SDE</a
-						> 2018-07 - 2024-01
+						>
+						 2018-07 - 2024-01
 					</div>
 					<br />
 					<div>
 						<i>Work</i>
 					</div>
-					 - <a class="underline" href="https://careers.ordbogen.com/">Ordbogen</a> 2019-07 - Now
+					 - <a class="underline" target="_blank" href="https://careers.ordbogen.com/">Ordbogen</a>
+					 2019-07 - Now
 				</Card>
-				<Card title="career.md" additionalClasses="bg-neu-cyan sm:w-0 sm:basis-2/3">
-					<Terminal client:load></Terminal>
+				<Card title="terminal.bash" classes="bg-neu-cyan sm:w-0 sm:basis-2/3" controls={true} client:load>
+					<Terminal client:load />
 				</Card>
 			</div>
 			<div class="flex items-center justify-between gap-3 max-sm:flex-col">
