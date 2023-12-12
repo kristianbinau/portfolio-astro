@@ -55,8 +55,6 @@ const prompt = computed(() => {
  */
 // Execute command
 async function onEnter() {
-	throw new Error('test');
-
 	commandExecuting.value = true;
 
 	const inputValue = input.value.trim();

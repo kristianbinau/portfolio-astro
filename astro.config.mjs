@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === 'production') {
 // https://astro.build/config
 export default defineConfig({
 	output: 'static',
-	site: 'https://binau.me',
+	site: 'https://www.binau.me',
 	adapter: vercel({
 		speedInsights: {
 			enabled: true,
