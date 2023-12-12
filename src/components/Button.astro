@@ -1,6 +1,7 @@
 ---
 interface Props {
 	link: string;
+	label: string;
 	additionalClasses?: string;
 }
 
@@ -11,7 +12,7 @@ const classes =
 	(additionalClasses ? ' ' + additionalClasses : '');
 ---
 
-<a class={classes} href={link} target="_blank">
+<a class={classes} href={link} aria-label={link} target="_blank">
 	<slot>
 		<svg></svg>
 	</slot>

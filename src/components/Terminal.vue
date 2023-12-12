@@ -4,6 +4,7 @@
 		<div class="flex items-center text-sm">
 			<div v-if="!commandExecuting" id="prompt" v-html="prompt"></div>
 			<input
+				aria-label="Terminal input"
 				ref="inputRef"
 				v-model="input"
 				class="bg-transparent outline-none"
@@ -46,7 +47,7 @@ const previousTabSuggestions = ref<string[]>([]);
 
 const prompt = computed(() => {
 	const path = currentPath.value === '/home/you' ? '~' : currentPath.value;
-	return `<span class="text-gray-400">[</span><span class="text-fuchsia-500">you@binau.me</span>&nbsp;<span class="text-violet-900">${path}</span><span class="text-gray-400">]</span>$&nbsp;`;
+	return `<span class="text-gray-400">[</span><span class="text-violet-800 font-bold">you@binau.me</span>&nbsp;<span class="text-violet-900">${path}</span><span class="text-gray-400">]</span>$&nbsp;`;
 });
 
 /**

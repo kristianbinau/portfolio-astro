@@ -44,13 +44,17 @@ import { getShortName, getFullName, getShortDescription } from '@utils/me';
 					</div>
 					 - <a class="underline" href="https://careers.ordbogen.com/">Ordbogen</a> 2019-07 - Now
 				</Card>
-				<Card title="career.md" additionalClasses="bg-neu-cyan sm:w-0 sm:basis-2/3">
-					<Terminal client:load></Terminal>
+				<Card title="terminal.sh" additionalClasses="bg-neu-cyan sm:w-0 sm:basis-2/3">
+					<Terminal client:load />
 				</Card>
 			</div>
 			<div class="flex items-center justify-between gap-3 max-sm:flex-col">
 				<div class="flex flex-wrap justify-center gap-2 text-2xl">
-					<Button link="https://github.com/kristianbinau" additionalClasses="bg-neu-pink">
+					<Button
+						link="https://github.com/kristianbinau"
+						label="GitHub"
+						additionalClasses="bg-neu-pink"
+					>
 						<svg
 							class="svg-inline--fa fa-github"
 							aria-hidden="true"
@@ -69,6 +73,7 @@ import { getShortName, getFullName, getShortDescription } from '@utils/me';
 					</Button>
 					<Button
 						link="https://www.linkedin.com/in/kristian-binau-2a92a8171/"
+						label="Linkedin"
 						additionalClasses="bg-neu-cyan"
 					>
 						<svg
@@ -89,6 +94,7 @@ import { getShortName, getFullName, getShortDescription } from '@utils/me';
 					</Button>
 					<Button
 						link="https://discord.com/users/180733602949103617"
+						label="Discord"
 						additionalClasses="bg-neu-yellow"
 					>
 						<svg
@@ -107,7 +113,11 @@ import { getShortName, getFullName, getShortDescription } from '@utils/me';
 							></path>
 						</svg>
 					</Button>
-					<Button link="https://www.reddit.com/user/Binau-01/" additionalClasses="bg-neu-red">
+					<Button
+						link="https://www.reddit.com/user/Binau-01/"
+						label="Reddit"
+						additionalClasses="bg-neu-red"
+					>
 						<svg
 							class="svg-inline--fa fa-reddit"
 							aria-hidden="true"
@@ -126,6 +136,7 @@ import { getShortName, getFullName, getShortDescription } from '@utils/me';
 					</Button>
 					<Button
 						link="https://open.spotify.com/user/1136511734?si=68a95fdc15a640ff"
+						label="Spotify"
 						additionalClasses="bg-neu-green"
 					>
 						<svg
@@ -147,6 +158,7 @@ import { getShortName, getFullName, getShortDescription } from '@utils/me';
 				</div>
 				<Button
 					link="https://github.com/kristianbinau/portfolio-astro"
+					label="GitHub Project"
 					additionalClasses="bg-white"
 				>
 					⭐
