@@ -19,7 +19,7 @@
 		"@astrojs/vue": "^4.1.0",
 		"@sentry/astro": "^7.112.2",
 		"@spotlightjs/astro": "^1.0.20",
-		"astro": "^4.7.0",
+		"astro": "^4.9.2",
 		"astro-robots-txt": "^1.0.0",
 		"tailwindcss": "^3.4.3",
 		"typescript": "^5.4.5",
